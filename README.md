@@ -1,6 +1,6 @@
+**Modified version to inclue Virtual Interface BGB statues**
+
 # aws-dx-monitor
-
-
 
 ***aws-dx-monitor*** monitors [AWS Direct Connect](https://aws.amazon.com/directconnect/) runtime configuration items with [Amazon CloudWatch](https://aws.amazon.com/cloudwatch/). The system is driven by [Amazon CloudWatch Events](http://docs.aws.amazon.com/AmazonCloudWatch/latest/events/WhatIsCloudWatchEvents.html) and [AWS Lambda](https://aws.amazon.com/lambda/).  
 
