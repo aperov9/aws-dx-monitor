@@ -29,10 +29,11 @@ cwclient = boto3.client('cloudwatch')
 
 # The 'live' handler - from scheduler
 def lambda_handler ( event, context ):
-    ver_vistate   ( dxclient.describe_virtual_interfaces() )
-    ver_cstate    ( dxclient.describe_connections() )
-    ver_vpgstate  ( dxclient.describe_virtual_gateways() )
-    ver_dxgwstate ( dxclient.describe_direct_connect_gateways() )
+    ver_vistate     ( dxclient.describe_virtual_interfaces() )
+    ver_vistateBGP  ( dxclient.describe_virtual_interfaces() )
+    ver_cstate      ( dxclient.descDirectConnectGatewayStateribe_connections() )
+    ver_vpgstate    ( dxclient.describe_virtual_gateways() )
+    ver_dxgwstate   ( dxclient.describe_direct_connect_gateways() )
     # Only DX Service Providers can make this call without an
     # exception
     #
@@ -46,6 +47,15 @@ def ver_vistate ( data ):
     for iface in data['virtualInterfaces']:
         put_vistate( iface['virtualInterfaceId'],
                      VirtualInterfaceState[iface['virtualInterfaceState']].value )
+
+# virtualInterfaces BGP evaluation (only applicable if one peer per vif)
+def ver_vistateBGP ( data ):
+    if not 'virtualInterfaces' in data:
+        logger.error("unexpected: virtualInterfaces key not found in data")
+        return
+    for iface in data['virtualInterfaces']:
+        put_vibgpstate( iface['virtualInterfaceId'],
+                     VirtualInterfaceBGPState[iface['bgpPeers'][0]['bgpStatus']].value )
 
 # connections payload evaluation
 def ver_cstate ( data ):
@@ -94,6 +104,25 @@ def put_vistate ( iid, state ):
         MetricData=[
             {
                 'MetricName': 'VirtualInterfaceState',
+                'Dimensions': [
+                    {
+                        'Name': 'VirtualInterfaceId',
+                        'Value': iid
+                    },
+                ],
+                'Value': state,
+                'Unit': 'None'
+            },
+        ],
+    )
+
+# Writes VirtualInterfaceState dimension data to DX custom metric
+def put_vibgpstate ( iid, state ):
+    response = cwclient.put_metric_data(
+        Namespace='AWSx/DirectConnect',
+        MetricData=[
+            {
+                'MetricName': 'VirtualInterfaceBGPState',
                 'Dimensions': [
                     {
                         'Name': 'VirtualInterfaceId',
@@ -223,3 +252,8 @@ class DirectConnectGatewayState(Enum):
     available  = 2
     deleting   = 3
     deleted    = 4
+
+class VirtualInterfaceBGPState(Enum):
+    up         = 1
+    down       = 2
+    unknown    = 3
