@@ -1,4 +1,4 @@
-**Modified version to inclue Virtual Interface BGB statues**
+**Modified version to include Virtual Interface BGB status**
 
 # aws-dx-monitor
 
